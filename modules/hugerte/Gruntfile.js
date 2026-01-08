@@ -11,10 +11,15 @@ let swag = require('@ephox/swag');
 let path = require('path');
 
 let plugins = [
-  'accordion', 'advlist', 'anchor', 'autolink', 'autoresize', 'autosave', 'charmap', 'code', 'codesample',
-  'directionality', 'emoticons', 'help', 'fullscreen', 'image', 'importcss', 'insertdatetime',
-  'link', 'lists', 'media', 'nonbreaking', 'pagebreak', 'preview', 'save', 'searchreplace',
-  'table', 'template', 'visualblocks', 'visualchars', 'wordcount', 'quickbars'
+  'advlist', 'autolink', 
+  'help', 'image', 'insertdatetime',
+  'link', 'lists', 'searchreplace',
+  'table', 'wordcount', 'quickbars'
+];
+
+let removedPlugins = [
+  'accordion', 'anchor', 'autoresize', 'charmap', 'code', 'codesample', 'directionality', 'emoticons', 'fullscreen',
+  'importcss', 'media', 'nonbreaking', 'pagebreak', 'preview', 'save', 'template', 'visualblocks', 'visualchars', 'autosave', 
 ];
 
 let themes = [
@@ -26,10 +31,7 @@ let models = [
 ];
 
 let oxideUiSkinMap = {
-  'dark': 'oxide-dark',
-  'default': 'oxide',
-  'hugerte-5': 'hugerte-5',
-  'hugerte-5-dark': 'hugerte-5-dark'
+  'hugerte-5': 'hugerte-5'
 };
 
 const stripSourceMaps = function (data) {
@@ -118,7 +120,7 @@ module.exports = function (grunt) {
           files: [
             {
               src: 'lib/core/main/ts/api/PublicApi.d.ts',
-              dest: 'js/hugerte/hugerte.d.ts'
+              dest: 'lib/core/main/ts/api/PublicApi.d.ts'
             }
           ]
         }
@@ -249,8 +251,8 @@ module.exports = function (grunt) {
             }
           },
           files: [
-            { src: 'src/plugins/emoticons/main/js/emojis.js', dest: 'js/hugerte/plugins/emoticons/js/emojis.js' },
-            { src: 'src/plugins/emoticons/main/js/emojiimages.js', dest: 'js/hugerte/plugins/emoticons/js/emojiimages.js' }
+            { src: 'src/plugins/emoticons/main/js/emojis.js', dest: 'src/plugins/emoticons/main/js/emojis.js' },
+            { src: 'src/plugins/emoticons/main/js/emojiimages.js', dest: 'src/plugins/emoticons/main/js/emojiimages.js' }
           ]
         }
       },
@@ -374,10 +376,6 @@ module.exports = function (grunt) {
           {
             src: '../../LICENSE.TXT',
             dest: 'js/hugerte/license.txt'
-          },
-          {
-            src: '../../README.md',
-            dest: 'js/hugerte/README.md'
           }
         ]
       },
@@ -408,14 +406,9 @@ module.exports = function (grunt) {
           {
             expand: true,
             cwd: '../oxide/build/skins/content',
-            src: '**',
+            src: 'default/**',
             dest: 'js/hugerte/skins/content'
           },
-        ]
-      },
-      'visualblocks-plugin': {
-        files: [
-          { src: 'src/plugins/visualblocks/main/css/visualblocks.css', dest: 'js/hugerte/plugins/visualblocks/css/visualblocks.css' }
         ]
       },
       'html-i18n': {
@@ -462,323 +455,11 @@ module.exports = function (grunt) {
           'js/hugerte/icons',
           'js/hugerte/themes',
           'js/hugerte/models',
-          'js/hugerte/hugerte.d.ts',
           'js/hugerte/hugerte.min.js',
           'js/hugerte/license.txt',
           'CHANGELOG.md',
           'LICENSE.TXT',
           'README.md'
-        ]
-      },
-
-      development: {
-        options: {
-          baseDir: 'hugerte',
-          excludes: [
-            '../../modules/*/dist',
-            '../../modules/*/build',
-            '../../modules/*/scratch',
-            '../../modules/*/lib',
-            '../../modules/*/tmp',
-            '../../modules/hugerte/js/hugerte/hugerte.full.min.js',
-            '../../scratch',
-            '../../node_modules'
-          ],
-          to: 'dist/hugerte_<%= pkg.version %>_dev.zip'
-        },
-        files: [
-          {
-            expand: true,
-            cwd: '../../',
-            src: [
-              'modules/*/src',
-              'modules/*/CHANGELOG.md',
-              'modules/*/Gruntfile.js',
-              'modules/*/gulpfile.js',
-              'modules/*/README.md',
-              'modules/*/README.md',
-              'modules/*/package.json',
-              'modules/*/tsconfig*.json',
-              'modules/*/.eslint*.json',
-              'modules/*/webpack.config.js',
-              'modules/*/.stylelintignore',
-              'modules/*/.stylelintrc',
-              'modules/hugerte/tools',
-              'bin',
-              'patches',
-              '.yarnrc',
-              'LICENSE.TXT',
-              'README.md',
-              'lerna.json',
-              'package.json',
-              'tsconfig*.json',
-              '.eslint*.json',
-              'yarn.lock'
-            ]
-          },
-          {
-            expand: true,
-            cwd: '../../',
-            src: 'modules/hugerte/js',
-            dest: '/',
-            flatten: true
-          }
-        ]
-      },
-
-      cdn: {
-        options: {
-          onBeforeSave: function (zip) {
-            zip.addData('dist/version.txt', packageData.version);
-          },
-          pathFilter: function (zipFilePath) {
-            return zipFilePath.replace('js/hugerte/', 'dist/');
-          },
-          dataFilter: (args) => {
-            if (args.filePath.endsWith('.min.css')) {
-              args.data = stripSourceMaps(args.data);
-            }
-          },
-          onBeforeConcat: function (destPath, chunks) {
-            // Strip the license from each file and prepend the license, so it only appears once
-            var license = grunt.file.read('src/core/text/build-header.js').replace(/@@version@@/g, packageData.version).replace(/@@releaseDate@@/g, packageData.date);
-            return [license].concat(chunks.map(function (chunk) {
-              return chunk.replace(license, '').trim();
-            }));
-          },
-          excludes: [
-            'js/**/config',
-            'js/**/scratch',
-            'js/**/classes',
-            'js/**/lib',
-            'js/**/dependency',
-            'js/**/src',
-            'js/**/*.less',
-            'js/**/*.dev.js',
-            'js/**/*.dev.svg',
-            'js/**/*.map',
-            'js/hugerte/hugerte.full.min.js',
-            'js/hugerte/plugins/moxiemanager',
-            'js/hugerte/plugins/visualblocks/img',
-            'js/hugerte/README.md',
-            'README.md',
-            'js/tests/.jshintrc'
-          ],
-          concat: [
-            {
-              src: [
-                'js/hugerte/hugerte.d.ts',
-                'js/hugerte/hugerte.min.js',
-                'js/hugerte/themes/*/theme.min.js',
-                'js/hugerte/models/*/model.min.js',
-                'js/hugerte/plugins/*/plugin.min.js',
-                '!js/hugerte/plugins/example/plugin.min.js',
-                '!js/hugerte/plugins/example_dependency/plugin.min.js'
-              ],
-
-              dest: [
-                'js/hugerte/hugerte.min.js'
-              ]
-            },
-          ],
-          to: 'dist/hugerte_<%= pkg.version %>_cdn.zip'
-        },
-        src: [
-          'js/hugerte/hugerte.js',
-          'js/hugerte/langs',
-          'js/hugerte/plugins',
-          'js/hugerte/skins',
-          'js/hugerte/icons',
-          'js/hugerte/themes',
-          'js/hugerte/models',
-          'js/hugerte/license.txt'
-        ]
-      },
-
-      component: {
-        options: {
-          excludes: [
-            'js/**/config',
-            'js/**/scratch',
-            'js/**/classes',
-            'js/**/lib',
-            'js/**/dependency',
-            'js/**/src',
-            'js/**/*.less',
-            'js/**/*.dev.svg',
-            'js/**/*.dev.js',
-            'js/**/*.map',
-            'js/hugerte/hugerte.full.min.js',
-            'js/hugerte/plugins/moxiemanager',
-            'js/hugerte/plugins/example',
-            'js/hugerte/plugins/example_dependency',
-            'js/hugerte/plugins/visualblocks/img'
-          ],
-          pathFilter: function (zipFilePath) {
-            if (zipFilePath.indexOf('js/hugerte/') === 0) {
-              return zipFilePath.substr('js/hugerte/'.length);
-            }
-
-            return zipFilePath;
-          },
-          onBeforeSave: function (zip) {
-            function jsonToBuffer(json) {
-              return new Buffer(JSON.stringify(json, null, '\t'));
-            }
-
-            const keywords = ['wysiwyg', 'hugerte', 'richtext', 'javascript', 'html', 'text', 'rich editor', 'rich text editor', 'rte', 'rich text', 'contenteditable', 'editing']
-
-            zip.addData('bower.json', jsonToBuffer({
-              'name': 'hugerte',
-              'description': 'Web based JavaScript HTML WYSIWYG editor control.',
-              'license': 'MIT',
-              'keywords': keywords,
-              'homepage': 'https:/hugerte.org/',
-              'ignore': ['README.md', 'composer.json', 'package.json', '.npmignore', 'CHANGELOG.md']
-            }));
-
-            zip.addData('package.json', jsonToBuffer({
-              'name': 'hugerte',
-              'version': packageData.version,
-              'repository': {
-                'type': 'git',
-                'url': 'https://github.com/hugerte/hugerte.git',
-                'directory': 'modules/hugerte'
-              },
-              'description': 'Web based JavaScript HTML WYSIWYG editor control.',
-              'author': 'Ephox Corporation DBA Tiny Technologies, Inc and the HugeRTE contributors',
-              'main': 'hugerte.js',
-              'types': 'hugerte.d.ts',
-              'license': 'MIT',
-              'keywords': keywords,
-              'homepage': 'https://hugerte.org/',
-              'bugs': { 'url': 'https://github.com/hugerte/hugerte/issues' }
-            }));
-
-            zip.addData('composer.json', jsonToBuffer({
-              'name': 'hugerte/hugerte',
-              'version': packageData.version,
-              'description': 'Web based JavaScript HTML WYSIWYG editor control.',
-              'license': ['MIT'],
-              'keywords': keywords,
-              'homepage': 'https://hugerte.org/',
-              'type': 'component',
-              'extra': {
-                'component': {
-                  'scripts': [
-                    'hugerte.js',
-                    'plugins/*/plugin.js',
-                    'themes/*/theme.js',
-                    'models/*/model.js',
-                    'icons/*/icons.js',
-                  ],
-                  'files': [
-                    'hugerte.min.js',
-                    'plugins/*/plugin.min.js',
-                    'themes/*/theme.min.js',
-                    'models/*/model.min.js',
-                    'skins/**',
-                    'icons/*/icons.min.js'
-                  ]
-                }
-              },
-              'archive': {
-                'exclude': ['README.md', 'bower.js', 'package.json', '.npmignore', 'CHANGELOG.md']
-              }
-            }));
-
-            var getDirs = zipUtils.getDirectories(grunt, this.excludes);
-
-            zipUtils.addIndexFiles(
-              zip,
-              getDirs('js/hugerte/plugins'),
-              zipUtils.generateIndex('plugins', 'plugin')
-            );
-            zipUtils.addIndexFiles(
-              zip,
-              getDirs('js/hugerte/themes'),
-              zipUtils.generateIndex('themes', 'theme')
-            );
-            zipUtils.addIndexFiles(
-              zip,
-              getDirs('js/hugerte/models'),
-              zipUtils.generateIndex('models', 'model')
-            );
-            zipUtils.addIndexFiles(
-              zip,
-              getDirs('js/hugerte/icons'),
-              zipUtils.generateIndex('icons', 'icons')
-            );
-          },
-          to: 'dist/hugerte_<%= pkg.version %>_component.zip',
-          dataFilter: (args) => {
-            if (args.filePath.endsWith('.min.css')) {
-              args.data = stripSourceMaps(args.data);
-            }
-          }
-        },
-        src: [
-          'js/hugerte/skins',
-          'js/hugerte/icons',
-          'js/hugerte/plugins',
-          'js/hugerte/themes',
-          'js/hugerte/models',
-          'js/hugerte/hugerte.js',
-          'js/hugerte/hugerte.d.ts',
-          'js/hugerte/hugerte.min.js',
-          'js/hugerte/license.txt',
-          'CHANGELOG.md',
-          'js/hugerte/README.md'
-        ]
-      }
-    },
-
-    nugetpack: {
-      main: {
-        options: {
-          id: 'HugeRTE',
-          version: packageData.version,
-          authors: 'Ephox Corporation DBA Tiny Technologies, Inc',
-          owners: 'Ephox Corporation DBA Tiny Technologies, Inc',
-          description: 'The best WYSIWYG editor! HugeRTE is an open source platform independent web based Javascript HTML WYSIWYG editor ' +
-          'control forked by the HugeRTE contributors from the latest MIT-licensed version of the TinyMCE editor released by Tiny Technologies, Inc. ' +
-          'HugeRTE has the ability to convert HTML TEXTAREA fields or other HTML elements to editor instances. HugeRTE is very easy to integrate ' +
-          'into other Content Management Systems.',
-          releaseNotes: 'Release notes for my package.',
-          summary: 'HugeRTE is a platform independent web based Javascript HTML WYSIWYG editor ' +
-          'control released as Open Source under MIT.',
-          projectUrl: 'https://hugerte.org/',
-          //iconUrl: 'https://www.tiny.cloud/favicon-32x32.png',
-          licenseUrl: 'https://github.com/hugerte/hugerte/blob/main/LICENSE.TXT',
-          requireLicenseAcceptance: true,
-          tags: 'Editor HugeRTE HTML HTMLEditor',
-          excludes: [
-            'js/**/config',
-            'js/**/scratch',
-            'js/**/classes',
-            'js/**/lib',
-            'js/**/dependency',
-            'js/**/src',
-            'js/**/*.less',
-            'js/**/*.dev.svg',
-            'js/**/*.dev.js',
-            'js/**/*.map',
-            'js/hugerte/hugerte.full.min.js'
-          ],
-          outputDir: 'dist'
-        },
-        files: [
-          { src: 'js/hugerte/langs', dest: '/content/scripts/hugerte/langs' },
-          { src: 'js/hugerte/plugins', dest: '/content/scripts/hugerte/plugins' },
-          { src: 'js/hugerte/themes', dest: '/content/scripts/hugerte/themes' },
-          { src: 'js/hugerte/models', dest: '/content/scripts/hugerte/models' },
-          { src: 'js/hugerte/skins', dest: '/content/scripts/hugerte/skins' },
-          { src: 'js/hugerte/icons', dest: '/content/scripts/hugerte/icons' },
-          { src: 'js/hugerte/hugerte.js', dest: '/content/scripts/hugerte/hugerte.js' },
-          { src: 'js/hugerte/hugerte.d.ts', dest: '/content/scripts/hugerte/hugerte.d.ts' },
-          { src: 'js/hugerte/hugerte.min.js', dest: '/content/scripts/hugerte/hugerte.min.js' },
-          { src: 'js/hugerte/license.txt', dest: '/content/scripts/hugerte/license.txt' },
-          { src: 'tools/nuget/build/HugeRTE.targets', dest: '/build/HugeRTE.targets' }
         ]
       },
     },
@@ -942,7 +623,6 @@ module.exports = function (grunt) {
     'prodBuild',
     'clean:release',
     'moxiezip',
-    'nugetpack',
     'symlink-dist',
     'version'
   ]);
